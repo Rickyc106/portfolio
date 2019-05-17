@@ -1,5 +1,5 @@
 /*
-	Escape Velocity by HTML5 UP
+	Spectral by HTML5 UP
 	html5up.net | @ajlkn
 	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
 */
@@ -8,89 +8,432 @@
 
 	skel
 		.breakpoints({
-			desktop: '(min-width: 737px)',
-			tablet: '(min-width: 737px) and (max-width: 1200px)',
-			mobile: '(max-width: 736px)'
-		})
-		.viewport({
-			breakpoints: {
-				tablet: {
-					width: 1080
-				}
-			}
+			xlarge:	'(max-width: 1680px)',
+			large:	'(max-width: 1280px)',
+			medium:	'(max-width: 980px)',
+			small:	'(max-width: 736px)',
+			xsmall:	'(max-width: 480px)'
 		});
 
 	$(function() {
 
 		var	$window = $(window),
-			$body = $('body');
+			$body = $('body'),
+			$wrapper = $('#page-wrapper'),
+			$banner = $('#banner'),
+			$header = $('#header');
 
 		// Disable animations/transitions until the page has loaded.
 			$body.addClass('is-loading');
 
 			$window.on('load', function() {
-				$body.removeClass('is-loading');
+				window.setTimeout(function() {
+					$body.removeClass('is-loading');
+				}, 100);
 			});
+
+		// Mobile?
+			if (skel.vars.mobile)
+				$body.addClass('is-mobile');
+			else
+				skel
+					.on('-medium !medium', function() {
+						$body.removeClass('is-mobile');
+					})
+					.on('+medium', function() {
+						$body.addClass('is-mobile');
+					});
 
 		// Fix: Placeholder polyfill.
 			$('form').placeholder();
 
-		// CSS polyfills (IE<9).
-			if (skel.vars.IEVersion < 9)
-				$(':last-child').addClass('last-child');
-
-		// Prioritize "important" elements on mobile.
-			skel.on('+mobile -mobile', function() {
+		// Prioritize "important" elements on medium.
+			skel.on('+medium -medium', function() {
 				$.prioritize(
-					'.important\\28 mobile\\29',
-					skel.breakpoint('mobile').active
+					'.important\\28 medium\\29',
+					skel.breakpoint('medium').active
 				);
 			});
 
-		// Dropdowns.
-			$('#nav > ul').dropotron({
-				mode: 'fade',
-				noOpenerFade: true,
-				alignment: 'center',
-				detach: false
-			});
+		// Scrolly.
+			$('.scrolly')
+				.scrolly({
+					speed: 1500,
+					offset: $header.outerHeight()
+				});
 
-		// Off-Canvas Navigation.
+		// Menu.
+			$('#menu')
+				.append('<a href="#menu" class="close"></a>')
+				.appendTo($body)
+				.panel({
+					delay: 500,
+					hideOnClick: true,
+					hideOnSwipe: true,
+					resetScroll: true,
+					resetForms: true,
+					side: 'right',
+					target: $body,
+					visibleClass: 'is-menu-visible'
+				});
 
-			// Title Bar.
-				$(
-					'<div id="titleBar">' +
-						'<a href="#navPanel" class="toggle"></a>' +
-						'<span class="title">' + $('#logo').html() + '</span>' +
-					'</div>'
-				)
-					.appendTo($body);
+		// Header.
+			if (skel.vars.IEVersion < 9)
+				$header.removeClass('alt');
 
-			// Navigation Panel.
-				$(
-					'<div id="navPanel">' +
-						'<nav>' +
-							$('#nav').navList() +
-						'</nav>' +
-					'</div>'
-				)
-					.appendTo($body)
-					.panel({
-						delay: 500,
-						hideOnClick: true,
-						hideOnSwipe: true,
-						resetScroll: true,
-						resetForms: true,
-						side: 'left',
-						target: $body,
-						visibleClass: 'navPanel-visible'
-					});
+			if ($banner.length > 0
+			&&	$header.hasClass('alt')) {
 
-			// Fix: Remove navPanel transitions on WP<10 (poor/buggy performance).
-				if (skel.vars.os == 'wp' && skel.vars.osVersion < 10)
-					$('#titleBar, #navPanel, #page-wrapper')
-						.css('transition', 'none');
+				$window.on('resize', function() { $window.trigger('scroll'); });
+
+				$banner.scrollex({
+					bottom:		$header.outerHeight() + 1,
+					terminate:	function() { $header.removeClass('alt'); },
+					enter:		function() { $header.addClass('alt'); },
+					leave:		function() { $header.removeClass('alt'); }
+				});
+
+			}
 
 	});
 
 })(jQuery);
+
+// http://workshop.chromeexperiments.com/examples/gui/#1--Basic-Usage
+// http://threejs.org/examples/misc_controls_trackball.html
+// http://threejs.org/examples/#misc_controls_orbit
+// http://threejs.org/examples/#webgl_helpers
+
+
+
+var sLoad = function() {
+    save();
+    location.reload();
+};
+
+var sClear = function() {
+    localStorage.clear();
+    location.reload();
+};
+
+
+
+var rgbArrToHex = function(arr) {
+    var tmp = new THREE.Color();
+    tmp.r = arr[0] / 255;
+    tmp.g = arr[1] / 255;
+    tmp.b = arr[2] / 255;
+    return tmp;
+};
+
+var load = function() {
+    var s = localStorage.getItem('stl_state');
+    if (!s) { return; }
+    state = JSON.parse(s);
+
+    state.load  = sLoad;
+    state.clear = sClear;
+};
+
+var save = function() {
+    localStorage.setItem('stl_state', JSON.stringify(state));
+};
+
+
+
+var state = {
+    // model
+    //stl:   'Full\ Assembly\ -\ Front\ View',
+    stl:   'Final\ Assembly',
+    //rotate: false, // RC car - False
+    rotate: true, // Drawing Arm - True
+    scale:  1,
+    debug:  true,
+
+    // environment
+    color:   [196, 0, 196],
+    fog:     true,
+    shadows: true,
+    animate: true,
+
+    load:   sLoad,
+    clear:  sClear
+};
+
+
+
+load();
+
+var COLOR = rgbArrToHex(state.color);
+
+//var gui = new dat.GUI();
+
+//var model = gui.addFolder('model');
+//model.add(state, 'stl', ['Full\ Assembly\ -\Front \View', 'Final\ Assembly']);
+//model.add(state, 'rotate');
+//model.add(state, 'debug');
+//model.open();
+
+//var environment = gui.addFolder('environment');
+//environment.addColor(state, 'color');
+//environment.add(state, 'animate');
+//environment.add(state, 'fog');
+//environment.add(state, 'shadows');
+//environment.open();
+
+//gui.add(state, 'load');
+//gui.add(state, 'clear');
+
+
+
+var container, controls, camera, cameraTarget, scene, mesh, renderer;
+
+
+// TODO:
+// expose GLOBALS to query string
+
+
+//var MAT_COLOR = 0xAA00AA;
+var MAT_SPEC  = 0x111111;
+var MAT_SHINE = 100;
+var GRD_COLOR = 0x999999;
+var GRD_SPEC  = 0x101010;
+var FOG_COLOR = 0x72645b;
+
+
+init();
+
+if (state.animate) { animate(); }
+else {               render();  }
+
+
+function init() {
+    container = document.createElement('div');
+    var element = document.getElementById("assembly1");
+    //document.body.appendChild(container);
+    element.appendChild(container);
+
+    camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 1, 15);
+    
+    camera.position.set(3, 0.15, 3);
+
+    cameraTarget = new THREE.Vector3(0, -0.25, 0);
+
+    scene = new THREE.Scene();
+    
+    if (state.fog) {
+        scene.fog = new THREE.Fog(FOG_COLOR, 2, 15);
+    }
+
+    if (!state.animate) {
+        controls = new THREE.OrbitControls(camera);
+        controls.addEventListener('change', render);
+    }
+
+    // Ground
+    var plane = new THREE.Mesh( 
+        new THREE.PlaneGeometry(40, 40),
+        new THREE.MeshPhongMaterial({
+            ambient:  GRD_COLOR,
+            color:    GRD_COLOR,
+            specular: GRD_SPEC
+        })
+    );
+    plane.rotation.x = -Math.PI/2;
+    plane.position.y = -0.5;
+    scene.add(plane);
+
+    if (state.shadows) {
+        plane.receiveShadow = true;
+    }
+
+
+
+    // STL file
+    var loader = new THREE.STLLoader();
+    loader.addEventListener('load', function (ev) {
+        var geometry = ev.content;
+        var material = new THREE.MeshPhongMaterial({
+            ambient:   COLOR,
+            color:     COLOR,
+            specular:  MAT_SPEC,
+            shininess: MAT_SHINE
+        });
+        var mesh = new THREE.Mesh(geometry, material);
+
+        // compute bounding box for geometry:
+        var vMin = Number.MIN_VALUE;
+        var vMax = Number.MAX_VALUE;
+        var m = [vMax, vMax, vMax];
+        var M = [vMin, vMin, vMin];
+
+        var verts = geometry.vertices;
+        for (var i = 0, f = verts.length, vert; i < f; ++i) {
+            vert = verts[i];
+            //if (state.rotate) { vert = {x:vert.x, y:vert.z, z:-vert.y}; } // TODO
+            if (vert.x < m[0]) { m[0] = vert.x; }
+            if (vert.y < m[1]) { m[1] = vert.y; }
+            if (vert.z < m[2]) { m[2] = vert.z; }
+            if (vert.x > M[0]) { M[0] = vert.x; }
+            if (vert.y > M[1]) { M[1] = vert.y; }
+            if (vert.z > M[2]) { M[2] = vert.z; }
+        }
+        var dims = [
+            M[0] - m[0],
+            M[1] - m[1],
+            M[2] - m[2]
+        ];
+        console.log('min', m, 'max', M, 'dims', dims);
+
+        var d = dims.slice();
+
+        // compute scale and pos
+        var maxDim = Math.max(dims[0], dims[1], dims[2]);
+        var x, y, z, s = 1 / maxDim;
+        //console.log('scale', s);
+        m[0] *= s;
+        m[1] *= s;
+        m[2] *= s;
+        M[0] *= s;
+        M[1] *= s;
+        M[2] *= s;
+        dims[0] *= s;
+        dims[1] *= s;
+        dims[2] *= s;
+        //console.log('min', m, 'max', M, 'dims', dims);
+        x = -(m[0] + M[0]) / 2;
+        y = -(m[1] + M[1]) / 2;
+        z = -(m[2] + M[2]) / 2;
+
+        //mesh.position.set(x - 0.13, y - 0.7, z + 0.5); // RC car
+        //mesh.rotation.set(-Math.PI/2, -0.08, -Math.PI/2); // RC car
+        
+        mesh.position.set(x,y,z); // Drawing Arm
+        
+        if (state.rotate) {
+            //mesh.rotation.set(0, Math.PI/2, 0);
+            mesh.rotation.set(0, 0, 0);
+        }
+        
+        if (s !== 1) {
+            mesh.scale.set(s, s, s);
+            geometry.computeFaceNormals();
+        }
+        
+        if (state.shadows) {
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+        }
+
+        scene.add(mesh);
+
+        if (state.debug) {
+            var wireframe = new THREE.WireframeHelper(mesh);
+            wireframe.material.depthTest   = false;
+            wireframe.material.opacity     = 0.06;
+            wireframe.material.transparent = true;
+            scene.add(wireframe);
+
+            scene.add( new THREE.BoxHelper(mesh) );
+
+            var grid = new THREE.GridHelper(2, 0.1); // Change first number to 0.5 for Testing RC Car Centering; Default 2
+            grid.setColors(0x0000ff, 0x808080);
+            grid.position.y = -0.5;
+            scene.add(grid);
+        }
+
+        var measure = function(n) { return n.toFixed(1) + 'mm'; };
+        
+        info.innerHTML = state.stl + '.stl OK. Dimensions: ' + measure(d[0]) + ' ' + measure(d[1]) + ' '  +measure(d[2]) + ' ';
+
+        if (!state.animate) {
+            controls.update();
+        }
+    } );
+    
+    info.innerHTML = 'LOADING ' + state.stl + '.stl...';
+    
+    loader.load('models/' + state.stl + '.stl');
+    //loader.load('https://www.thingiverse.com/download:336358');
+
+    // Lights
+    scene.add( new THREE.AmbientLight(0x777777) );
+
+    //if (state.shadows) {
+        addShadowedLight(1,   1,  1, 0xFFFFFF, 1.35);
+        addShadowedLight(0.5, 1, -1, 0xFFAA00, 1);
+    //}
+
+    // renderer
+    renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha:     false
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    //renderer.setSize(500, 500);
+    
+    if (state.fog) {
+        renderer.setClearColor(scene.fog.color, 1);
+    }
+
+    renderer.gammaInput = true;
+    renderer.gammaOutput = true;
+    renderer.physicallyBasedShading = true;
+
+    if (state.shadows) {
+        renderer.shadowMapEnabled = true;
+        renderer.shadowMapCullFace = THREE.CullFaceBack;
+    }
+    
+    container.appendChild(renderer.domElement);
+
+    window.addEventListener('resize', onWindowResize, false);
+}
+
+function addShadowedLight(x, y, z, color, intensity) {
+    var directionalLight = new THREE.DirectionalLight(color, intensity);
+    directionalLight.position.set(x, y, z);
+    scene.add(directionalLight);
+
+    if (!state.shadows) { return; }
+
+    directionalLight.castShadow = true;
+    // directionalLight.shadowCameraVisible = true;
+
+    var d = 1;
+    directionalLight.shadowCameraLeft   = -d;
+    directionalLight.shadowCameraRight  =  d;
+    directionalLight.shadowCameraTop    =  d;
+    directionalLight.shadowCameraBottom = -d;
+
+    directionalLight.shadowCameraNear = 1;
+    directionalLight.shadowCameraFar  = 4;
+
+    directionalLight.shadowMapWidth  = 1024;
+    directionalLight.shadowMapHeight = 1024;
+
+    directionalLight.shadowBias     = -0.005;
+    directionalLight.shadowDarkness =  0.15;
+}
+
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize( window.innerWidth, window.innerHeight );
+}
+
+function animate() {
+    requestAnimationFrame( animate );
+    render();
+}
+
+function render() {
+    if (state.animate) {
+        var timer = Date.now() * 0.0005;
+        camera.position.x = Math.cos(timer) * 3;
+        camera.position.z = Math.sin(timer) * 3;
+        camera.lookAt(cameraTarget);
+    }
+
+    renderer.render(scene, camera);
+}
